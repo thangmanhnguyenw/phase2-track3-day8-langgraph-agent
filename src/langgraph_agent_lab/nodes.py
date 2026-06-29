@@ -141,7 +141,8 @@ def answer_node(state: AgentState) -> dict:
                 "role": "system",
                 "content": (
                     "You are a helpful support agent. Write a concise, professional reply "
-                    "grounded ONLY in the provided context. Do not invent data."
+                    "grounded ONLY in the provided context. Do not invent data. "
+                    "Do not mention deprecated policy values."
                 ),
             },
             {"role": "user", "content": f"Context:\n{context}\n\nWrite the support reply:"},

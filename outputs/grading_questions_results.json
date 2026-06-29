@@ -1,0 +1,180 @@
+{
+  "total_questions": 10,
+  "success_count": 10,
+  "success_rate": 1.0,
+  "retrieval_accuracy": 1.0,
+  "results": [
+    {
+      "question_id": "gq_d10_01",
+      "question": "Theo chính sách hoàn tiền hiện hành, khách hàng có tối đa bao nhiêu ngày làm việc để gửi yêu cầu hoàn tiền sau khi đơn được xác nhận?",
+      "expect_top1_doc_id": "policy_refund_v4",
+      "retrieved_doc_id": "policy_refund_v4",
+      "retrieval_correct": true,
+      "answer": "Chào bạn,\n\nTheo chính sách hoàn tiền hiện hành, khách hàng có tối đa 7 ngày làm việc để gửi yêu cầu hoàn tiền sau khi đơn được xác nhận. Xin lưu ý rằng các sản phẩm như hàng kỹ thuật số, license key, và subscription không đủ điều kiện hoàn tiền.\n\nNếu bạn cần thêm thông tin, vui lòng cho chúng tôi biết.\n\nTrân trọng,  \n[Your Name]  \n[Your Position]  ",
+      "route": "simple",
+      "content_pass": true,
+      "forbidden_violations": [],
+      "missing_required": [],
+      "success": true,
+      "grading_criteria": [
+        "Nêu đúng 7 ngày làm việc",
+        "Không chấp nhận 14 ngày là chính sách hiện hành",
+        "Top-1 retrieval nên đến từ policy_refund_v4"
+      ]
+    },
+    {
+      "question_id": "gq_d10_02",
+      "question": "Đâu là loại sản phẩm bị loại khỏi điều kiện hoàn tiền?",
+      "expect_top1_doc_id": "policy_refund_v4",
+      "retrieved_doc_id": "policy_refund_v4",
+      "retrieval_correct": true,
+      "answer": "Chào bạn,\n\nCác sản phẩm bị loại khỏi điều kiện hoàn tiền bao gồm hàng kỹ thuật số, license key và subscription. Nếu bạn cần thêm thông tin, vui lòng cho chúng tôi biết.\n\nTrân trọng!",
+      "route": "simple",
+      "content_pass": true,
+      "forbidden_violations": [],
+      "missing_required": [],
+      "success": true,
+      "grading_criteria": [
+        "Nêu đúng nhóm sản phẩm không được hoàn tiền",
+        "Không lấy ngoại lệ chung ngẫu nhiên"
+      ]
+    },
+    {
+      "question_id": "gq_d10_03",
+      "question": "Finance Team xử lý yêu cầu hoàn tiền trong bao lâu?",
+      "expect_top1_doc_id": "policy_refund_v4",
+      "retrieved_doc_id": "policy_refund_v4",
+      "retrieval_correct": true,
+      "answer": "Chào bạn,\n\nFinance Team sẽ xử lý yêu cầu hoàn tiền trong khoảng 3-5 ngày làm việc. Bạn cần lưu ý rằng bạn có tối đa 7 ngày làm việc để gửi yêu cầu hoàn tiền sau khi đơn hàng được xác nhận. Các sản phẩm không đủ điều kiện hoàn tiền bao gồm hàng kỹ thuật số, license key, và subscription.\n\nNếu bạn cần thêm thông tin, vui lòng cho chúng tôi biết.\n\nTrân trọng,  \n[Your Name]  \n[Your Position]",
+      "route": "simple",
+      "content_pass": true,
+      "forbidden_violations": [],
+      "missing_required": [],
+      "success": true,
+      "grading_criteria": [
+        "Nêu đúng thời gian xử lý 3-5 ngày làm việc",
+        "Phải là thông tin từ policy_refund_v4"
+      ]
+    },
+    {
+      "question_id": "gq_d10_04",
+      "question": "SLA phản hồi ban đầu cho ticket P1 là bao lâu?",
+      "expect_top1_doc_id": "sla_p1_2026",
+      "retrieved_doc_id": "sla_p1_2026",
+      "retrieval_correct": true,
+      "answer": "SLA phản hồi ban đầu cho ticket P1 là 15 phút. Nếu không có phản hồi sau 10 phút, hệ thống sẽ tự động escalated.",
+      "route": "simple",
+      "content_pass": true,
+      "forbidden_violations": [],
+      "missing_required": [],
+      "success": true,
+      "grading_criteria": [
+        "Nêu đúng 15 phút",
+        "Top-1 retrieval nên là sla_p1_2026"
+      ]
+    },
+    {
+      "question_id": "gq_d10_05",
+      "question": "SLA resolution cho ticket P1 là bao nhiêu giờ?",
+      "expect_top1_doc_id": "sla_p1_2026",
+      "retrieved_doc_id": "sla_p1_2026",
+      "retrieval_correct": true,
+      "answer": "SLA resolution cho ticket P1 là 4 giờ. Nếu không có phản hồi sau 10 phút, hệ thống sẽ tự động escalated.",
+      "route": "simple",
+      "content_pass": true,
+      "forbidden_violations": [],
+      "missing_required": [],
+      "success": true,
+      "grading_criteria": [
+        "Nêu đúng 4 giờ",
+        "Top-1 retrieval nên là sla_p1_2026"
+      ]
+    },
+    {
+      "question_id": "gq_d10_06",
+      "question": "Nếu không có phản hồi với ticket P1 sau bao lâu thì hệ thống auto escalate?",
+      "expect_top1_doc_id": "sla_p1_2026",
+      "retrieved_doc_id": "sla_p1_2026",
+      "retrieval_correct": true,
+      "answer": "Chào bạn,\n\nTheo quy định, nếu không có phản hồi với ticket P1 sau 10 phút, hệ thống sẽ tự động tiến hành escalated.\n\nNếu bạn cần thêm thông tin, vui lòng cho tôi biết.\n\nTrân trọng!",
+      "route": "simple",
+      "content_pass": true,
+      "forbidden_violations": [],
+      "missing_required": [],
+      "success": true,
+      "grading_criteria": [
+        "Nêu đúng 10 phút",
+        "Không trả lời sai giá trị escalation"
+      ]
+    },
+    {
+      "question_id": "gq_d10_07",
+      "question": "Tài khoản bị khóa sau bao nhiêu lần đăng nhập sai liên tiếp?",
+      "expect_top1_doc_id": "it_helpdesk_faq",
+      "retrieved_doc_id": "it_helpdesk_faq",
+      "retrieval_correct": true,
+      "answer": "Tài khoản của bạn sẽ bị khóa sau 5 lần đăng nhập sai liên tiếp. Nếu bạn cần thêm hỗ trợ, vui lòng cho chúng tôi biết.",
+      "route": "simple",
+      "content_pass": true,
+      "forbidden_violations": [],
+      "missing_required": [],
+      "success": true,
+      "grading_criteria": [
+        "Nêu đúng 5 lần",
+        "Top-1 retrieval nên là it_helpdesk_faq"
+      ]
+    },
+    {
+      "question_id": "gq_d10_08",
+      "question": "VPN cho phép kết nối tối đa bao nhiêu thiết bị cùng lúc?",
+      "expect_top1_doc_id": "it_helpdesk_faq",
+      "retrieved_doc_id": "it_helpdesk_faq",
+      "retrieval_correct": true,
+      "answer": "Chào bạn,\n\nVPN cho phép kết nối tối đa 2 thiết bị cùng lúc. Nếu bạn cần thêm thông tin, vui lòng cho tôi biết.\n\nTrân trọng!",
+      "route": "simple",
+      "content_pass": true,
+      "forbidden_violations": [],
+      "missing_required": [],
+      "success": true,
+      "grading_criteria": [
+        "Nêu đúng giới hạn 2 thiết bị",
+        "Không lấy thông tin từ tài liệu khác"
+      ]
+    },
+    {
+      "question_id": "gq_d10_09",
+      "question": "Nhân viên dưới 3 năm kinh nghiệm được bao nhiêu ngày phép năm theo chính sách HR 2026?",
+      "expect_top1_doc_id": "hr_leave_policy",
+      "retrieved_doc_id": "hr_leave_policy",
+      "retrieval_correct": true,
+      "answer": "Theo chính sách HR 2026, nhân viên dưới 3 năm kinh nghiệm được 12 ngày phép năm.",
+      "route": "simple",
+      "content_pass": true,
+      "forbidden_violations": [],
+      "missing_required": [],
+      "success": true,
+      "grading_criteria": [
+        "Nêu đúng 12 ngày phép năm",
+        "Không chấp nhận 10 ngày phép năm (bản HR 2025)",
+        "Top-1 retrieval nên là hr_leave_policy"
+      ]
+    },
+    {
+      "question_id": "gq_d10_10",
+      "question": "Level 4 Admin Access yêu cầu phê duyệt bởi ai?",
+      "expect_top1_doc_id": "access_control_sop",
+      "retrieved_doc_id": "access_control_sop",
+      "retrieval_correct": true,
+      "answer": "Level 4 Admin Access requires approval from the IT Manager and the CISO. If you have any further questions, feel free to ask.",
+      "route": "simple",
+      "content_pass": true,
+      "forbidden_violations": [],
+      "missing_required": [],
+      "success": true,
+      "grading_criteria": [
+        "Nêu đúng IT Manager và/hoặc CISO",
+        "Top-1 retrieval nên là access_control_sop"
+      ]
+    }
+  ]
+}

@@ -9,6 +9,7 @@ from typing import Annotated
 import typer
 import yaml
 
+from .grade_questions import append_grading_to_report, grade_questions, write_grading_results
 from .graph import build_graph
 from .metrics import MetricsReport, metric_from_state, summarize_metrics, write_metrics
 from .persistence import build_checkpointer
@@ -58,6 +59,24 @@ def validate_metrics(metrics: Annotated[Path, typer.Option("--metrics")]) -> Non
     if report.total_scenarios < 6:
         raise typer.BadParameter("Expected at least 6 scenarios")
     typer.echo(f"Metrics valid. success_rate={report.success_rate:.2%}")
+
+
+@app.command("grade-questions")
+def grade_questions_cmd(
+    questions: Annotated[Path, typer.Option("--questions")] = Path("grading_questions.json"),
+    policy_docs: Annotated[Path, typer.Option("--policy-docs")] = Path("data/sample/policy_docs.json"),
+    output: Annotated[Path, typer.Option("--output")] = Path("outputs/grading_questions_results.json"),
+    report_path: Annotated[Path, typer.Option("--report-path")] = Path("reports/lab_report.md"),
+) -> None:
+    """Grade grading_questions.json and append results to lab report."""
+    report = grade_questions(questions, policy_docs)
+    write_grading_results(report, output)
+    append_grading_to_report(report_path, report)
+    typer.echo(
+        f"Graded {report.total_questions} questions. "
+        f"success_rate={report.success_rate:.2%}. "
+        f"Wrote {output} and updated {report_path}"
+    )
 
 
 if __name__ == "__main__":

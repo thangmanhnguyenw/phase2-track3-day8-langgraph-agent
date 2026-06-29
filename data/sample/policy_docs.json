@@ -1,0 +1,22 @@
+{
+  "policy_refund_v4": {
+    "title": "Chính sách hoàn tiền v4",
+    "content": "Khách hàng có tối đa 7 ngày làm việc để gửi yêu cầu hoàn tiền sau khi đơn được xác nhận. Các sản phẩm bị loại khỏi điều kiện hoàn tiền gồm: hàng kỹ thuật số, license key, và subscription. Finance Team xử lý yêu cầu hoàn tiền trong 3-5 ngày làm việc."
+  },
+  "sla_p1_2026": {
+    "title": "SLA ticket P1 2026",
+    "content": "SLA phản hồi ban đầu cho ticket P1 là 15 phút. SLA resolution cho ticket P1 là 4 giờ. Nếu không có phản hồi với ticket P1 sau 10 phút thì hệ thống tự động auto escalate."
+  },
+  "it_helpdesk_faq": {
+    "title": "IT Helpdesk FAQ",
+    "content": "Tài khoản bị khóa sau 5 lần đăng nhập sai liên tiếp. VPN cho phép kết nối tối đa 2 thiết bị cùng lúc."
+  },
+  "hr_leave_policy": {
+    "title": "HR Leave Policy 2026",
+    "content": "Theo chính sách HR 2026, nhân viên dưới 3 năm kinh nghiệm được 12 ngày phép năm."
+  },
+  "access_control_sop": {
+    "title": "Access Control SOP",
+    "content": "Level 4 Admin Access yêu cầu phê duyệt bởi IT Manager và CISO."
+  }
+}
