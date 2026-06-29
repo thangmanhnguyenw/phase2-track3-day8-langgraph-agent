@@ -26,6 +26,10 @@ checkpoints.db
 checkpoints.db-wal
 checkpoints.db-shm
 
+# Generated outputs
+outputs/
+reports/lab_report.md
+
 # Testing
 .pytest_cache/
 .ruff_cache/

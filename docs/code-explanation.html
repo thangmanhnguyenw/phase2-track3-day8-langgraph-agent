@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Day 08 — LangGraph Agent — Giải thích chi tiết</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card: #1a2332;
+      --card2: #111827;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --green: #4ade80;
+      --orange: #fb923c;
+      --pink: #f472b6;
+      --purple: #c4b5fd;
+      --yellow: #facc15;
+      --red: #f87171;
+      --border: #2d3a4f;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.75;
+    }
+    .hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+      padding: 3rem 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .container { max-width: 1060px; margin: 0 auto; padding: 0 2rem 3rem; }
+    h1 { font-size: 2.2rem; color: var(--accent); margin-bottom: 0.4rem; }
+    .subtitle { color: var(--muted); font-size: 1.05rem; }
+    h2 {
+      font-size: 1.45rem;
+      margin: 2.5rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border);
+      color: var(--accent);
+    }
+    h3 { font-size: 1.1rem; margin: 1.5rem 0 0.7rem; color: var(--green); }
+    h4 { font-size: 0.95rem; margin: 1rem 0 0.5rem; color: var(--orange); }
+    p, li { color: var(--muted); margin-bottom: 0.55rem; }
+    strong.hl { color: var(--text); }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin: 1.2rem 0;
+    }
+    .card-highlight {
+      border-color: #38bdf866;
+      background: linear-gradient(135deg, #1a2332, #152238);
+    }
+    .score-big {
+      font-size: 3.5rem;
+      font-weight: 800;
+      color: var(--green);
+      line-height: 1;
+    }
+    .score-range { font-size: 1.1rem; color: var(--yellow); margin-top: 0.3rem; }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.65rem;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      margin: 0.15rem 0.2rem 0.15rem 0;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .b-llm { background: #7c3aed44; color: var(--purple); border: 1px solid #7c3aed66; }
+    .b-route { background: #0369a144; color: var(--accent); border: 1px solid #0369a166; }
+    .b-hitl { background: #ea580c44; color: var(--orange); border: 1px solid #ea580c66; }
+    .b-retry { background: #ca8a0444; color: var(--yellow); border: 1px solid #ca8a0466; }
+    .b-end { background: #16a34a44; color: var(--green); border: 1px solid #16a34a66; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88rem; }
+    th, td { border: 1px solid var(--border); padding: 0.65rem 0.85rem; text-align: left; vertical-align: top; }
+    th { background: var(--card2); color: var(--accent); font-weight: 600; }
+    td { color: var(--muted); }
+    tr:hover td { background: #ffffff05; }
+    .pts { color: var(--green); font-weight: 700; white-space: nowrap; }
+    .pts-warn { color: var(--yellow); }
+    pre {
+      background: #020617;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      overflow-x: auto;
+      font-size: 0.82rem;
+      margin: 0.8rem 0;
+      color: #cbd5e1;
+      line-height: 1.55;
+    }
+    code { font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.88em; }
+    .toc { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.5rem 0; }
+    .toc a {
+      color: var(--accent);
+      text-decoration: none;
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+    .toc a:hover { border-color: var(--accent); }
+
+    /* Pipeline visual */
+    .pipeline {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.3rem;
+      margin: 1rem 0;
+      padding: 1rem;
+      background: #020617;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .pipe-node {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.4rem 0.7rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .pipe-node.llm { border-color: #7c3aed; color: var(--purple); }
+    .pipe-node.cond { border-color: var(--yellow); color: var(--yellow); border-style: dashed; }
+    .pipe-node.end { border-color: var(--green); color: var(--green); }
+    .pipe-arrow { color: var(--muted); font-size: 1rem; }
+
+    /* Scenario cards */
+    .scenario-grid { display: grid; gap: 1.2rem; }
+    .scenario-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .scenario-header {
+      padding: 1rem 1.2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .scenario-id { font-weight: 800; color: var(--accent); font-size: 1rem; }
+    .scenario-query { font-style: italic; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .scenario-body { padding: 1rem 1.2rem; }
+    .step-list { list-style: none; counter-reset: s; }
+    .step-list li {
+      counter-increment: s;
+      padding: 0.55rem 0 0.55rem 2.2rem;
+      position: relative;
+      border-bottom: 1px solid #ffffff08;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+    .step-list li:last-child { border-bottom: none; }
+    .step-list li::before {
+      content: counter(s);
+      position: absolute;
+      left: 0;
+      width: 1.5rem;
+      height: 1.5rem;
+      background: #1e3a5f;
+      color: var(--accent);
+      border-radius: 50%;
+      text-align: center;
+      line-height: 1.5rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .step-list li strong { color: var(--text); }
+
+    /* Concept boxes */
+    .concept-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .concept-box {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.1rem;
+    }
+    .concept-box .icon { font-size: 1.5rem; margin-bottom: 0.4rem; }
+    .concept-box h4 { margin: 0 0 0.4rem; color: var(--accent); }
+    .analogy {
+      background: #1e3a5f33;
+      border-left: 4px solid var(--accent);
+      padding: 0.8rem 1rem;
+      border-radius: 0 8px 8px 0;
+      margin: 0.8rem 0;
+      font-size: 0.9rem;
+    }
+    .analogy em { color: var(--purple); font-style: normal; }
+
+    /* Master flow diagram */
+    .master-flow {
+      background: #020617;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      overflow-x: auto;
+    }
+    .flow-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 0.8rem;
+    }
+    .flow-label {
+      width: 110px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--orange);
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .warn-box {
+      background: #ca8a0422;
+      border: 1px solid #ca8a0466;
+      border-radius: 10px;
+      padding: 1rem;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .warn-box strong { color: var(--yellow); }
+    .progress-bar {
+      height: 8px;
+      background: #1e293b;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 0.4rem;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--green));
+      border-radius: 4px;
+    }
+    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: #64748b; font-size: 0.82rem; }
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="container" style="padding-bottom:0">
+    <h1>Day 08 — LangGraph Agent Lab</h1>
+    <p class="subtitle">Giải thích chi tiết chức năng, luồng chạy từng scenario và ước tính điểm khi gắn API</p>
+    <div class="toc" style="margin-top:1.5rem">
+      <a href="#diem">Ước điểm</a>
+      <a href="#tongquan">Tổng quan</a>
+      <a href="#luong-tong">Luồng tổng</a>
+      <a href="#scenario">7 Scenarios</a>
+      <a href="#node">Từng Node</a>
+      <a href="#state">State</a>
+      <a href="#chay">Hướng dẫn chạy</a>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- SCORE SECTION -->
+  <h2 id="diem">📊 Ước tính điểm khi gắn API và chạy thành công</h2>
+
+  <div class="card card-highlight">
+    <div style="display:flex;flex-wrap:wrap;gap:2rem;align-items:center">
+      <div>
+        <div class="score-big">90–95</div>
+        <div class="score-range">/ 100 điểm (kỳ vọng thực tế)</div>
+      </div>
+      <div style="flex:1;min-width:260px">
+        <p>Khi bạn <strong class="hl">gắn API key hợp lệ</strong>, chạy <code>run-scenarios</code> và <code>pytest</code> pass — dự án hiện tại đáp ứng đủ yêu cầu band <strong class="hl">90–100</strong> trong rubric.</p>
+        <div class="progress-bar"><div class="progress-fill" style="width:93%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <tr>
+      <th>Hạng mục chấm</th>
+      <th>Điểm tối đa</th>
+      <th>Ước tính của bạn</th>
+      <th>Lý do</th>
+    </tr>
+    <tr>
+      <td>Architecture &amp; state schema</td>
+      <td class="pts">15</td>
+      <td class="pts">14–15</td>
+      <td>Đủ field: evaluation_result, approval, proposed_action, pending_question. Reducers append/overwrite đúng.</td>
+    </tr>
+    <tr>
+      <td>Graph construction &amp; wiring</td>
+      <td class="pts">15</td>
+      <td class="pts">14–15</td>
+      <td>11 nodes, 4 conditional edges, mọi path → finalize → END.</td>
+    </tr>
+    <tr>
+      <td>LLM integration</td>
+      <td class="pts">15</td>
+      <td class="pts">13–15</td>
+      <td>classify + answer dùng LLM thật (.with_structured_output). evaluate dùng heuristic (không mất điểm LLM chính).</td>
+    </tr>
+    <tr>
+      <td>Graph behavior</td>
+      <td class="pts">20</td>
+      <td class="pts-warn">16–19</td>
+      <td>7 scenario mẫu thường pass. Hidden scenario phụ thuộc độ chính xác LLM classify — có thể lệch 1–2 case.</td>
+    </tr>
+    <tr>
+      <td>Persistence &amp; recovery</td>
+      <td class="pts">10</td>
+      <td class="pts">9–10</td>
+      <td>SQLite + WAL, thread_id riêng, resume_success=true trong metrics.</td>
+    </tr>
+    <tr>
+      <td>Metrics &amp; tests</td>
+      <td class="pts">15</td>
+      <td class="pts">13–15</td>
+      <td>metrics.json hợp lệ, pytest pass (cần API key cho smoke tests).</td>
+    </tr>
+    <tr>
+      <td>Report &amp; demo</td>
+      <td class="pts">10</td>
+      <td class="pts">8–10</td>
+      <td>lab_report.md tự sinh. Demo giải thích 1 route + 1 failure mode → đủ điểm.</td>
+    </tr>
+    <tr style="background:#1e3a5f33">
+      <td><strong class="hl">Tổng</strong></td>
+      <td><strong class="hl">100</strong></td>
+      <td><strong style="color:var(--green)">88–95</strong></td>
+      <td>Trung bình ~<strong class="hl">92</strong> nếu success_rate ≥ 85%</td>
+    </tr>
+  </table>
+
+  <div class="warn-box">
+    <strong>⚠️ Có thể mất điểm nếu:</strong>
+    LLM classify sai route trên hidden scenario (ví dụ nhầm "refund" → tool thay vì risky);
+    không chạy <code>run-scenarios</code> nên thiếu metrics.json;
+    API key lỗi/hết quota → graph không chạy được → &lt;60 điểm.
+    <br><br>
+    <strong>✅ Để đạt 95+:</strong> Chạy scenarios, kiểm tra success_rate trong metrics.json,
+    điền tên vào lab_report.md, demo giải thích retry loop + HITL trước giảng viên.
+  </div>
+
+  <!-- OVERVIEW -->
+  <h2 id="tongquan">🎯 Dự án này làm gì? (giải thích 30 giây)</h2>
+
+  <div class="analogy">
+    Hãy tưởng tượng bạn là <em>tổng đài viên AI</em> nhận ticket hỗ trợ khách hàng.
+    Mỗi tin nhắn đi qua <strong class="hl">dây chuyền xử lý</strong> (graph):
+    tiếp nhận → phân loại (LLM) → xử lý theo loại → trả lời → ghi log.
+    Một số loại cần <strong class="hl">hỏi thêm</strong>, <strong class="hl">gọi tool</strong>,
+    <strong class="hl">xin duyệt người</strong>, hoặc <strong class="hl">thử lại khi lỗi</strong>.
+  </div>
+
+  <div class="concept-grid">
+    <div class="concept-box">
+      <div class="icon">🧠</div>
+      <h4>LangGraph StateGraph</h4>
+      <p>Workflow dạng đồ thị: mỗi bước là 1 <strong class="hl">node</strong>, state được truyền và cập nhật qua từng node.</p>
+    </div>
+    <div class="concept-box">
+      <div class="icon">🔀</div>
+      <h4>Conditional Routing</h4>
+      <p>Sau classify, graph <strong class="hl">rẽ nhánh</strong> theo route — không phải query nào cũng đi cùng đường.</p>
+    </div>
+    <div class="concept-box">
+      <div class="icon">🔄</div>
+      <h4>Retry Loop (có giới hạn)</h4>
+      <p>Lỗi tạm thời → thử lại tối đa <code>max_attempts</code> lần → hết thì <strong class="hl">dead letter</strong>.</p>
+    </div>
+    <div class="concept-box">
+      <div class="icon">👤</div>
+      <h4>HITL (Human-in-the-Loop)</h4>
+      <p>Hành động nguy hiểm (refund, xóa account) phải qua node <strong class="hl">approval</strong> trước khi thực thi.</p>
+    </div>
+  </div>
+
+  <!-- MASTER FLOW -->
+  <h2 id="luong-tong">🔁 Luồng chạy tổng — tất cả bắt đầu giống nhau</h2>
+
+  <div class="card">
+    <h3 style="margin-top:0">Giai đoạn 1: Mọi query đều đi qua</h3>
+    <div class="pipeline">
+      <span class="pipe-node">START</span>
+      <span class="pipe-arrow">→</span>
+      <span class="pipe-node">intake<br><small style="color:var(--muted)">chuẩn hóa text</small></span>
+      <span class="pipe-arrow">→</span>
+      <span class="pipe-node llm">classify<br><small>LLM phân loại</small></span>
+      <span class="pipe-arrow">→</span>
+      <span class="pipe-node cond">route_after_classify<br><small>rẽ 5 nhánh</small></span>
+    </div>
+    <p>Sau <code>classify</code>, state có <code>route</code> = một trong: <code>simple | tool | missing_info | risky | error</code></p>
+  </div>
+
+  <div class="master-flow">
+    <h3 style="margin-top:0;color:var(--green)">Giai đoạn 2: 5 nhánh xử lý</h3>
+
+    <div class="flow-row">
+      <span class="flow-label">simple</span>
+      <span class="pipe-node">answer</span><span class="pipe-arrow">→</span>
+      <span class="pipe-node llm">LLM trả lời</span><span class="pipe-arrow">→</span>
+      <span class="pipe-node end">finalize → END</span>
+    </div>
+
+    <div class="flow-row">
+      <span class="flow-label">tool</span>
+      <span class="pipe-node">tool</span><span class="pipe-arrow">→</span>
+      <span class="pipe-node">evaluate</span><span class="pipe-arrow">→</span>
+      <span class="pipe-node cond">retry?</span><span class="pipe-arrow">→</span>
+      <span class="pipe-node llm">answer</span><span class="pipe-arrow">→</span>
+      <span class="pipe-node end">finalize</span>
+    </div>
+
+    <div class="flow-row">
+      <span class="flow-label">missing_info</span>
+      <span class="pipe-node">clarify</span><span class="pipe-arrow">→</span>
+      <span class="pipe-node">hỏi thêm user</span><span class="pipe-arrow">→</span>
+      <span class="pipe-node end">finalize</span>
+    </div>
+
+    <div class="flow-row">
+      <span class="flow-label">risky</span>
+      <span class="pipe-node">risky_action</span><span class="pipe-arrow">→</span>
+      <span class="pipe-node b-hitl" style="border-color:var(--orange);color:var(--orange);padding:0.4rem 0.7rem;border-radius:8px;border:1px solid">approval</span><span class="pipe-arrow">→</span>
+      <span class="pipe-node">tool</span><span class="pipe-arrow">→</span>
+      <span class="pipe-node">evaluate</span><span class="pipe-arrow">→</span>
+      <span class="pipe-node llm">answer</span><span class="pipe-arrow">→</span>
+      <span class="pipe-node end">finalize</span>
+    </div>
+
+    <div class="flow-row">
+      <span class="flow-label">error</span>
+      <span class="pipe-node">retry</span><span class="pipe-arrow">→</span>
+      <span class="pipe-node cond">attempt &lt; max?</span><span class="pipe-arrow">→</span>
+      <span class="pipe-node">tool</span><span class="pipe-arrow">→</span>
+      <span class="pipe-node">evaluate</span><span class="pipe-arrow">→</span>
+      <span class="pipe-node" style="color:var(--red);border-color:var(--red)">dead_letter</span><span class="pipe-arrow"> hoặc </span>
+      <span class="pipe-node llm">answer</span><span class="pipe-arrow">→</span>
+      <span class="pipe-node end">finalize</span>
+    </div>
+  </div>
+
+  <h3>Retry loop giải thích đơn giản</h3>
+  <pre><code>                    ┌──────────────────────────────────┐
+                    │         evaluate_node            │
+                    │  tool result có "ERROR"?         │
+                    └────────────┬─────────────────────┘
+                          Có     │     Không
+                           ▼     │      ▼
+                        retry    │    answer
+                    (attempt++)  │
+                           ▼     │
+              attempt &lt; max_attempts?
+                    │         │
+                   Có        Không
+                    ▼         ▼
+                  tool    dead_letter
+                    │
+                    └──► evaluate (lặp lại)</code></pre>
+
+  <!-- SCENARIOS -->
+  <h2 id="scenario">📋 Luồng chi tiết — 7 Scenarios (từng bước một)</h2>
+  <p>Mỗi scenario = 1 ticket khách hàng. Dưới đây là <strong class="hl">chính xác các node</strong> graph sẽ đi qua.</p>
+
+  <div class="scenario-grid">
+
+    <div class="scenario-card">
+      <div class="scenario-header">
+        <div>
+          <div class="scenario-id">S01_simple</div>
+          <div class="scenario-query">"How do I reset my password?"</div>
+        </div>
+        <span class="badge b-route">route: simple</span>
+      </div>
+      <div class="scenario-body">
+        <ol class="step-list">
+          <li><strong>intake</strong> — Chuẩn hóa câu hỏi</li>
+          <li><strong>classify (LLM)</strong> — Nhận diện: câu hỏi FAQ, không cần tool → <code>route=simple</code></li>
+          <li><strong>answer (LLM)</strong> — Sinh hướng dẫn reset password</li>
+          <li><strong>finalize</strong> — Ghi log hoàn thành → END</li>
+        </ol>
+        <div class="pipeline" style="margin-top:0.8rem">
+          <span class="pipe-node">intake</span><span class="pipe-arrow">→</span>
+          <span class="pipe-node llm">classify</span><span class="pipe-arrow">→</span>
+          <span class="pipe-node llm">answer</span><span class="pipe-arrow">→</span>
+          <span class="pipe-node end">finalize</span>
+        </div>
+        <p style="margin-top:0.6rem;font-size:0.85rem">✅ Đường ngắn nhất — 4 nodes. Không retry, không approval.</p>
+      </div>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-header">
+        <div>
+          <div class="scenario-id">S02_tool</div>
+          <div class="scenario-query">"Please lookup order status for order 12345"</div>
+        </div>
+        <span class="badge b-route">route: tool</span>
+      </div>
+      <div class="scenario-body">
+        <ol class="step-list">
+          <li><strong>classify (LLM)</strong> — Tra cứu thông tin → <code>route=tool</code></li>
+          <li><strong>tool</strong> — Mock API trả về: "Order 12345 status SHIPPED"</li>
+          <li><strong>evaluate</strong> — Không có ERROR → <code>evaluation_result=success</code></li>
+          <li><strong>answer (LLM)</strong> — Trả lời khách dựa trên kết quả tool</li>
+          <li><strong>finalize</strong> → END</li>
+        </ol>
+        <div class="pipeline">
+          <span class="pipe-node">intake</span><span class="pipe-arrow">→</span>
+          <span class="pipe-node llm">classify</span><span class="pipe-arrow">→</span>
+          <span class="pipe-node">tool</span><span class="pipe-arrow">→</span>
+          <span class="pipe-node">evaluate</span><span class="pipe-arrow">→</span>
+          <span class="pipe-node llm">answer</span><span class="pipe-arrow">→</span>
+          <span class="pipe-node end">finalize</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-header">
+        <div>
+          <div class="scenario-id">S03_missing</div>
+          <div class="scenario-query">"Can you fix it?"</div>
+        </div>
+        <span class="badge b-route">route: missing_info</span>
+      </div>
+      <div class="scenario-body">
+        <ol class="step-list">
+          <li><strong>classify (LLM)</strong> — Câu quá mơ hồ, thiếu context → <code>route=missing_info</code></li>
+          <li><strong>clarify</strong> — Hỏi lại: "Bạn cần fix cái gì? Account/order nào?"</li>
+          <li><strong>finalize</strong> → END (không đoán bừa / hallucinate)</li>
+        </ol>
+        <p style="font-size:0.85rem">💡 <strong class="hl">Tại sao quan trọng:</strong> Agent production không được bịa câu trả lời khi thiếu thông tin.</p>
+      </div>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-header">
+        <div>
+          <div class="scenario-id">S04_risky</div>
+          <div class="scenario-query">"Refund this customer and send confirmation email"</div>
+        </div>
+        <span class="badge b-hitl">route: risky + HITL</span>
+      </div>
+      <div class="scenario-body">
+        <ol class="step-list">
+          <li><strong>classify (LLM)</strong> — Refund + email = side-effect → <code>route=risky</code></li>
+          <li><strong>risky_action</strong> — Ghi <code>proposed_action</code> cần duyệt</li>
+          <li><strong>approval</strong> — Mock approve (approved=true). Metrics ghi <code>interrupt_count=1</code></li>
+          <li><strong>tool</strong> — Thực thi sau khi được duyệt</li>
+          <li><strong>evaluate → answer (LLM) → finalize</strong></li>
+        </ol>
+        <p style="font-size:0.85rem">🔒 <code>requires_approval=true</code> → metrics kiểm tra <code>approval_observed=true</code></p>
+      </div>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-header">
+        <div>
+          <div class="scenario-id">S05_error</div>
+          <div class="scenario-query">"Timeout failure while processing request"</div>
+        </div>
+        <span class="badge b-retry">route: error + retry</span>
+      </div>
+      <div class="scenario-body">
+        <ol class="step-list">
+          <li><strong>classify (LLM)</strong> — Lỗi hệ thống → <code>route=error</code></li>
+          <li><strong>retry</strong> — attempt=1, ghi lỗi transient</li>
+          <li><strong>tool</strong> — attempt&lt;2 → trả về chuỗi chứa "ERROR" (mô phỏng lỗi)</li>
+          <li><strong>evaluate</strong> — Phát hiện ERROR → <code>needs_retry</code></li>
+          <li><strong>retry</strong> — attempt=2</li>
+          <li><strong>tool</strong> — attempt≥2 → SUCCESS lần này</li>
+          <li><strong>evaluate → answer (LLM) → finalize</strong></li>
+        </ol>
+        <p style="font-size:0.85rem">🔄 Retry loop chạy 1–2 vòng rồi thành công. <code>total_retries</code> trong metrics tăng.</p>
+      </div>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-header">
+        <div>
+          <div class="scenario-id">S06_delete</div>
+          <div class="scenario-query">"Delete customer account after support verification"</div>
+        </div>
+        <span class="badge b-hitl">route: risky + HITL</span>
+      </div>
+      <div class="scenario-body">
+        <ol class="step-list">
+          <li><strong>classify (LLM)</strong> — Xóa account = destructive → <code>route=risky</code></li>
+          <li><strong>risky_action → approval → tool → evaluate → answer → finalize</strong></li>
+        </ol>
+        <p style="font-size:0.85rem">Giống S04 nhưng hành động nguy hiểm hơn (xóa dữ liệu vĩnh viễn).</p>
+      </div>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-header">
+        <div>
+          <div class="scenario-id">S07_dead_letter</div>
+          <div class="scenario-query">"System failure cannot recover after multiple attempts"</div>
+        </div>
+        <span class="badge b-retry">max_attempts=1</span>
+      </div>
+      <div class="scenario-body">
+        <ol class="step-list">
+          <li><strong>classify (LLM)</strong> → <code>route=error</code></li>
+          <li><strong>retry</strong> — attempt tăng lên 1</li>
+          <li><strong>route_after_retry</strong> — 1 &lt; 1? <strong>Không</strong> → đi <code>dead_letter</code> ngay</li>
+          <li><strong>dead_letter</strong> — Trả final_answer: "đã escalate, không xử lý được"</li>
+          <li><strong>finalize</strong> → END</li>
+        </ol>
+        <p style="font-size:0.85rem">☠️ Kiểm tra graph <strong class="hl">không loop vô hạn</strong> — điểm quan trọng trong rubric.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- NODES DETAIL -->
+  <h2 id="node">⚙️ Chức năng từng Node — đọc 1 lần là hiểu</h2>
+
+  <table>
+    <tr><th>Node</th><th>Input đọc từ state</th><th>Output ghi vào state</th><th>1 câu giải thích</th></tr>
+    <tr>
+      <td><code>intake</code></td>
+      <td>query</td>
+      <td>query (trim), messages, events</td>
+      <td>Làm sạch text đầu vào trước khi xử lý.</td>
+    </tr>
+    <tr>
+      <td><code>classify</code> <span class="badge b-llm">LLM</span></td>
+      <td>query</td>
+      <td>route, risk_level, events</td>
+      <td>AI đọc câu hỏi và quyết định "loại ticket" — không hard-code keyword.</td>
+    </tr>
+    <tr>
+      <td><code>tool</code></td>
+      <td>route, attempt, query</td>
+      <td>tool_results, events</td>
+      <td>Giả lập gọi API/API ngoài; route=error + attempt&lt;2 thì trả ERROR.</td>
+    </tr>
+    <tr>
+      <td><code>evaluate</code></td>
+      <td>tool_results[-1]</td>
+      <td>evaluation_result, events</td>
+      <td>Kiểm tra tool có thành công không — cổng quyết định retry.</td>
+    </tr>
+    <tr>
+      <td><code>answer</code> <span class="badge b-llm">LLM</span></td>
+      <td>query, tool_results, approval</td>
+      <td>final_answer, events</td>
+      <td>AI viết câu trả lời cuối, chỉ dựa trên context đã có.</td>
+    </tr>
+    <tr>
+      <td><code>clarify</code></td>
+      <td>query</td>
+      <td>pending_question, final_answer, events</td>
+      <td>Hỏi user thêm thay vì đoán.</td>
+    </tr>
+    <tr>
+      <td><code>risky_action</code></td>
+      <td>query</td>
+      <td>proposed_action, events</td>
+      <td>Mô tả hành động nguy hiểm cần duyệt.</td>
+    </tr>
+    <tr>
+      <td><code>approval</code> <span class="badge b-hitl">HITL</span></td>
+      <td>proposed_action</td>
+      <td>approval{approved, reviewer}, events</td>
+      <td>Người duyệt (hoặc mock) cho phép / từ chối hành động.</td>
+    </tr>
+    <tr>
+      <td><code>retry</code></td>
+      <td>attempt</td>
+      <td>attempt+1, errors, events</td>
+      <td>Đếm số lần thử, ghi log lỗi tạm thời.</td>
+    </tr>
+    <tr>
+      <td><code>dead_letter</code></td>
+      <td>attempt, errors</td>
+      <td>final_answer, events</td>
+      <td>Bỏ cuộc, escalate — hàng đợi "không cứu được".</td>
+    </tr>
+    <tr>
+      <td><code>finalize</code></td>
+      <td>toàn bộ state</td>
+      <td>events</td>
+      <td>Điểm kết thúc bắt buộc — mọi nhánh phải đến đây.</td>
+    </tr>
+  </table>
+
+  <!-- STATE -->
+  <h2 id="state">📦 State — "Bộ nhớ" graph mang theo suốt hành trình</h2>
+
+  <div class="card">
+    <p>LangGraph không dùng biến global. Mỗi lần chạy có 1 object <code>AgentState</code> — như <strong class="hl">chiếc cặp</strong> node nào mở ra, bỏ thêm/thay đồ vào, truyền sang node tiếp.</p>
+
+    <h4>Append (cộng dồn — không xóa cũ)</h4>
+    <p><code>messages</code>, <code>tool_results</code>, <code>errors</code>, <code>events</code> — dùng <code>Annotated[list, add]</code></p>
+
+    <h4>Overwrite (ghi đè — chỉ giữ giá trị mới nhất)</h4>
+    <p><code>route</code>, <code>attempt</code>, <code>evaluation_result</code>, <code>approval</code>, <code>final_answer</code></p>
+
+    <pre><code># Khởi tạo mỗi scenario (state.py)
+initial_state(scenario) → {
+  "thread_id": "thread-S01_simple",   # ID riêng cho SQLite checkpoint
+  "query": "...",
+  "attempt": 0,
+  "max_attempts": 3,                  # S07 override = 1
+  "route": "",                        # classify sẽ điền
+  ...
+}</code></pre>
+  </div>
+
+  <!-- FILES -->
+  <h2>📁 File quan trọng &amp; vai trò</h2>
+  <table>
+    <tr><th>File</th><th>Vai trò trong luồng chạy</th></tr>
+    <tr><td><code>scenarios.jsonl</code></td><td>Danh sách ticket test → CLI đọc từng dòng</td></tr>
+    <tr><td><code>cli.py</code></td><td><code>initial_state()</code> → <code>graph.invoke()</code> → ghi metrics</td></tr>
+    <tr><td><code>graph.py</code></td><td>Nối các node + routing thành đồ thị hoàn chỉnh</td></tr>
+    <tr><td><code>persistence.py</code></td><td>Lưu checkpoint SQLite giữa các lần invoke</td></tr>
+    <tr><td><code>metrics.json</code></td><td>Kết quả chấm: success_rate, retry_count, ...</td></tr>
+    <tr><td><code>lab_report.md</code></td><td>Báo cáo tự sinh — nộp bài</td></tr>
+  </table>
+
+  <!-- RUN -->
+  <h2 id="chay">🚀 Hướng dẫn chạy — OpenAI</h2>
+  <ol class="step-list" style="margin-top:1rem">
+    <li>
+      <strong>Kích hoạt venv</strong>
+      <pre><code>cd e:\ai\phase2-track3-day8-langgraph-agent
+.\.venv\Scripts\Activate.ps1</code></pre>
+    </li>
+    <li>
+      <strong>Cài OpenAI (đã cài trong venv, chạy lại nếu cần)</strong>
+      <pre><code>pip install -e ".[dev,sqlite,openai]"</code></pre>
+    </li>
+    <li>
+      <strong>Cấu hình .env — OpenAI</strong>
+      <pre><code># File .env
+LLM_PROVIDER=openai
+OPENAI_API_KEY=sk-proj-...key-that-cua-ban...
+# LLM_MODEL=gpt-4o-mini</code></pre>
+    </li>
+    <li>
+      <strong>Chạy khô (không cần API)</strong>
+      <pre><code>pytest tests/test_routing.py tests/test_state.py tests/test_metrics.py -q</code></pre>
+    </li>
+    <li>
+      <strong>Kiểm tra API key</strong>
+      <pre><code>python -c "from langgraph_agent_lab.llm import get_llm; llm=get_llm(); print('OpenAI OK:', type(llm).__name__)"</code></pre>
+    </li>
+    <li>
+      <strong>Test full + chạy scenarios</strong>
+      <pre><code>pytest -v
+python -m langgraph_agent_lab.cli run-scenarios --config configs/lab.yaml --output outputs/metrics.json
+python -m langgraph_agent_lab.cli validate-metrics --metrics outputs/metrics.json</code></pre>
+    </li>
+  </ol>
+
+  <div class="warn-box">
+    <strong>Sau khi chạy xong, kiểm tra:</strong>
+    <code>outputs/metrics.json</code> → <code>success_rate</code> càng cao càng tốt (mục tiêu ≥ 85%).
+    <code>reports/lab_report.md</code> → điền tên bạn vào phần Team/student.
+  </div>
+
+  <footer>
+  Day 08 LangGraph Agent Lab — docs/code-explanation.html — Cập nhật 2026-06-29
+  </footer>
+
+</div>
+</body>
+</html>
