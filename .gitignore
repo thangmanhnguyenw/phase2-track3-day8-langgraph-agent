@@ -21,14 +21,10 @@ env/
 # Environment
 .env
 
-# Persistence
+# Persistence (local sqlite — regenerable via run-scenarios)
 checkpoints.db
 checkpoints.db-wal
 checkpoints.db-shm
-
-# Generated outputs
-outputs/
-reports/lab_report.md
 
 # Testing
 .pytest_cache/
